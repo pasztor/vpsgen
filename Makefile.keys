@@ -1,0 +1,21 @@
+# Make your own key repo somewhere and copy this makefile there
+# 0. Install required sw
+# # apt-get install putty-tools nail
+# It's also requires a working MTA, so nail can deliver the generated keys
+# 1. Make a key for yourself:
+# $ make your.ppk TYPE=rsa BITS=4096 MAILTO=your.address@to.send.this.key
+# 2. Update your repo
+# $ make update
+# 3. goto #1
+
+TYPE?=dsa
+MAILTO?=your@mail.addr.es
+
+update:
+	tar czf pkeys.tgz *.pkey *.apt
+	scp pkeys.tgz your.server:/directory/www/user/pk
+
+%.ppk:
+	puttygen -t $(TYPE) $(if $(BITS),"-b $(BITS)") -o $*.ppk
+	puttygen -o $*.pkey -L $*.ppk
+	echo 'Kedves Cimzett! / Dear User!\nEz a level tartalmazza az on ssh kulcsat, amit a putty nevu programmal hasznalhat.\nThis mail contains your newly generated ssh key, which you may use with the putty software.\nAngol nyelvu felhasznaloi leiras:\nUser manual: http://www.siteground.com/tutorials/ssh/putty.htm\nA mellekelt fajl jelszo nelkul betoltheto a putty/pageant programba!\nThe attached file can be load into putty/pageant without further passphrase needed!' | nail -a $*.ppk -s 'Putty private key file. [$*]' $(MAILTO)

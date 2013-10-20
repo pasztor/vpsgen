@@ -1,0 +1,30 @@
+How to use this thing
+
+0. make your key repo available @ somewhere
+eg. create a new key repo:
+$ mkdir /your/repo/here
+$ cp Makefile.keys /your/repo/here/Makefile
+$ cd /your/repo/here ; ...
+follow the instructions in that Makefile's head
+
+When your repo setup is done, ``vi Makefile'' here, and fill in PKURL 
+
+1. install basic things
+# apt-get --no-install-recommends install xfsprogs make rsync
+I assume, the basics, you need for lxc installation eg. debootstrap,
+bridge-utils, etc. are already installed ;-)
+
+2. Install this onto your system
+# make install
+
+3. edit a template, use example
+# cp /etc/vst/templates/{example,mynewmachine}
+# vi /etc/vst/templates/mynewmachine
+users's public key should be in /etc/vst/keys/user.pkey
+
+If you added a new user's pkey into 'PKURL', then just run
+# make keyinst
+In this directory, and it will refresh your /etc/vst/keys
+
+4. generate your new lxc
+# vpsgen mynewmachine

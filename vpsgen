@@ -1,0 +1,60 @@
+#!/bin/bash
+
+confdir=/etc/vst
+[ -d $confdir ] || exit 1
+[ -d $confdir/common ] || exit 1
+
+if [ -r $confdir/common/shared.sh ]; then
+. $confdir/common/shared.sh
+else
+echo "There is no $confdir/common/shared.sh" >&2
+exit 1
+fi
+
+[ $# -eq 1 ] || exiterr "Add meg a hostnevet!"
+host=$1
+lh=$(uname -n)
+volname="${lh}_${host}"
+volname=${volname:0:12}
+
+set -e
+
+# Load settings,purposes,hosttemplate
+[ -r $confdir/common/vstemplate.conf ] || exiterr 'Nincs alapkonfig! '"($confdir/common/vstemplate.conf)"
+. $confdir/common/vstemplate.conf
+[ -r $confdir/common/purpose.sh ] || exiterr 'Nem lehet betolteni a csomagokat!'"($confdir/common/purpose.sh)"
+. $confdir/common/purpose.sh
+[ -r $confdir/templates/$host ] || exiterr 'Nem talalom a konfigot! '"($confdir/templates/$host)"
+. $confdir/templates/$host
+
+prepare_disk
+rootfs=$VSERVER_ROOT/$host/rootfs
+
+echo debootstrap eleje
+echo_and_do \
+debootstrap --verbose --variant=minbase \
+	${DEB_A:+--arch=}$DEB_A \
+	${DEB_I:+--include=}$DEB_I \
+	${DEB_E:+--exclude=}$DEB_E \
+	$DEB_DIST $rootfs $DEB_MIRROR
+echo debootstrap utan
+
+prepare_lxcsys
+
+prepare_lxcnet
+
+prepare_lxcis
+
+configure_lxcis
+
+do_all_purpose
+
+prepare_users
+
+echo "apt-get clean" >>$rootfs/root/initscript.sh
+
+chmod +x $rootfs/root/initscript.sh
+lxc-start -n $host /root/initscript.sh
+rm $rootfs/root/initscript.sh
+ln -s $VSERVER_ROOT/$host/config /etc/lxc/$host.conf
+echo "CONTAINERS=\"\$CONTAINERS $host\"" >>/etc/default/lxc
