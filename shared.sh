@@ -185,11 +185,11 @@ for i in ${users//,/ } ; do
 	gecos=${i#*:}
 	gecos="${gecos//_/ }"
 	login=${i%%:*}
-	cp $confdir/keys/$login.pkey $rootfs/root/$login.pkey
+	[ -r "$confdir/keys/$login.pkey" ] && cp $confdir/keys/$login.pkey $rootfs/root/$login.pkey
 	cat <<END >>$rootfs/root/initscript.sh
 adduser --disabled-password --gecos "$gecos" $login
 install -d -m 700 -o $login -g $login /home/$login/.ssh
-install -m 600 -o $login -g $login /root/$login.pkey /home/$login/.ssh/authorized_keys
+[ -r "/root/$login.pkey" ] && install -m 600 -o $login -g $login /root/$login.pkey /home/$login/.ssh/authorized_keys
 rm /root/$login.pkey
 END
 done
@@ -199,5 +199,5 @@ for i in ${wheel//,/ } ; do
 done
 
 install -d -m 700 -o root -g root $rootfs/root/.ssh
-install -m 600 -o root -g root $confdir/keys/$VSBACKUPKEY.pkey $rootfs/root/.ssh/authorized_keys
+[ -r "$VSROOTKEY" ] && install -m 600 -o root -g root $confdir/keys/${VSROOTKEY} $rootfs/root/.ssh/authorized_keys
 }
